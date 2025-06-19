@@ -334,6 +334,10 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 				CustomType:  customfield.NewListType[types.String](ctx),
 				ElementType: types.StringType,
 			},
+			"name": schema.StringAttribute{
+				Description: "DNS record name (or @ for the zone apex) in Punycode.",
+				Required:    true,
+			},
 			"settings": schema.SingleNestedAttribute{
 				Description: "Settings for the DNS record.",
 				Computed:    true,

@@ -13,6 +13,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
@@ -87,6 +90,8 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 			"options_preflight_bypass": schema.BoolAttribute{
 				Description: "Allows options preflight requests to bypass Access authentication and go directly to the origin. Cannot turn on if cors_headers is set.",
 				Optional:    true,
+				Computed:    true,
+				Default:     booldefault.StaticBool(false),
 			},
 			"read_service_tokens_from_header": schema.StringAttribute{
 				Description: "Allows matching Access Service Tokens passed HTTP in a single header with this name.\nThis works as an alternative to the (CF-Access-Client-Id, CF-Access-Client-Secret) pair of headers.\nThe header value will be interpreted as a json object similar to: \n  {\n    \"cf-access-client-id\": \"88bf3b6d86161464f6509f7219099e57.access.example.com\",\n    \"cf-access-client-secret\": \"bdd31cbc4dec990953e39163fbbb194c93313ca9f0a6e420346af9d326b1d2a5\"\n  }",
@@ -382,9 +387,7 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 			},
 			"path_cookie_attribute": schema.BoolAttribute{
 				Description: "Enables cookie paths to scope an application's JWT to the application path. If disabled, the JWT will scope to the hostname by default",
-				Computed:    true,
 				Optional:    true,
-				Default:     booldefault.StaticBool(false),
 			},
 			"session_duration": schema.StringAttribute{
 				Description: "The amount of time that tokens issued for this application will be valid. Must be in the format `300ms` or `2h45m`. Valid time units are: ns, us (or µs), ms, s, m, h. Note: unsupported for infrastructure type applications.",
@@ -394,9 +397,7 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 			},
 			"skip_app_launcher_login_page": schema.BoolAttribute{
 				Description: "Determines when to skip the App Launcher landing page.",
-				Computed:    true,
 				Optional:    true,
-				Default:     booldefault.StaticBool(false),
 			},
 			"self_hosted_domains": schema.ListAttribute{
 				Description:        "List of public domains that Access will secure. This field is deprecated in favor of `destinations` and will be supported until **November 21, 2025.** If `destinations` are provided, then `self_hosted_domains` will be ignored.",
@@ -405,6 +406,9 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 				DeprecationMessage: "This attribute is deprecated.",
 				CustomType:         customfield.NewListType[types.String](ctx),
 				ElementType:        types.StringType,
+				PlanModifiers: []planmodifier.List{
+					listplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"tags": schema.ListAttribute{
 				Description: "The tags you want assigned to an application. Tags are used to filter applications in the App Launcher dashboard.",
@@ -418,6 +422,9 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 				Computed:    true,
 				Optional:    true,
 				CustomType:  customfield.NewNestedObjectListType[ZeroTrustAccessApplicationDestinationsModel](ctx),
+				PlanModifiers: []planmodifier.List{
+					listplanmodifier.UseStateForUnknown(),
+				},
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"type": schema.StringAttribute{
@@ -459,9 +466,11 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 			},
 			"landing_page_design": schema.SingleNestedAttribute{
 				Description: "The design of the App Launcher landing page shown to users when they log in.",
-				Computed:    true,
 				Optional:    true,
 				CustomType:  customfield.NewNestedObjectType[ZeroTrustAccessApplicationLandingPageDesignModel](ctx),
+				PlanModifiers: []planmodifier.Object{
+					objectplanmodifier.UseStateForUnknown(),
+				},
 				Attributes: map[string]schema.Attribute{
 					"button_color": schema.StringAttribute{
 						Description: "The background color of the log in button on the landing page.",
@@ -499,15 +508,16 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 							Required:    true,
 						},
 						"precedence": schema.Int64Attribute{
-							Description: "The order of execution for this policy. Must be unique for each policy within an app.",
-							Optional:    true,
-							Computed:    true,
+							Description:   "The order of execution for this policy. Must be unique for each policy within an app.",
+							Optional:      true,
+							Computed:      true,
+							PlanModifiers: []planmodifier.Int64{int64planmodifier.UseStateForUnknown()},
 						},
 					},
 				},
 			},
 			"saas_app": schema.SingleNestedAttribute{
-				Computed:   true,
+				// Computed:   true,
 				Optional:   true,
 				CustomType: customfield.NewNestedObjectType[ZeroTrustAccessApplicationSaaSAppModel](ctx),
 				Attributes: map[string]schema.Attribute{
@@ -755,6 +765,9 @@ func ResourceSchema(ctx context.Context) schema.Schema {
 			"aud": schema.StringAttribute{
 				Description: "Audience tag.",
 				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"created_at": schema.StringAttribute{
 				Computed:   true,

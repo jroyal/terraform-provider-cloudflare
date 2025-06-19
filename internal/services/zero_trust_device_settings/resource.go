@@ -188,17 +188,17 @@ func (r *ZeroTrustDeviceSettingsResource) Delete(ctx context.Context, req resour
 		return
 	}
 
-	_, err := r.client.ZeroTrust.Devices.Settings.Delete(
-		ctx,
-		zero_trust.DeviceSettingDeleteParams{
-			AccountID: cloudflare.F(data.AccountID.ValueString()),
-		},
-		option.WithMiddleware(logging.Middleware(ctx)),
-	)
-	if err != nil {
-		resp.Diagnostics.AddError("failed to make http request", err.Error())
-		return
-	}
+	// _, err := r.client.ZeroTrust.Devices.Settings.Delete(
+	// 	ctx,
+	// 	zero_trust.DeviceSettingDeleteParams{
+	// 		AccountID: cloudflare.F(data.AccountID.ValueString()),
+	// 	},
+	// 	option.WithMiddleware(logging.Middleware(ctx)),
+	// // )
+	// if err != nil {
+	// 	resp.Diagnostics.AddError("failed to make http request", err.Error())
+	// 	return
+	// }
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
